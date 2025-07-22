@@ -49,8 +49,6 @@ async function initConfig() {
   }
 
   if (process.env.DOCKER_ENV === 'true') {
-    // 这里用 eval("require") 避开静态分析，防止 Edge Runtime 打包时报 "Can't resolve 'fs'"
-    // 在实际 Node.js 运行时才会执行到，因此不会影响 Edge 环境。
     // eslint-disable-next-line @typescript-eslint/no-implied-eval
     const _require = eval('require') as NodeRequire;
     const fs = _require('fs') as typeof import('fs');
@@ -281,6 +279,21 @@ export async function resetConfig() {
     } catch (e) {
       console.error('获取用户列表失败:', e);
     }
+  }
+
+  if (process.env.DOCKER_ENV === 'true') {
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const _require = eval('require') as NodeRequire;
+    const fs = _require('fs') as typeof import('fs');
+    const path = _require('path') as typeof import('path');
+
+    const configPath = path.join(process.cwd(), 'config.json');
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    fileConfig = JSON.parse(raw) as ConfigFileStruct;
+    console.log('load dynamic config success');
+  } else {
+    // 默认使用编译时生成的配置
+    fileConfig = runtimeConfig as unknown as ConfigFileStruct;
   }
 
   // 从文件中获取源信息，用于补全源
