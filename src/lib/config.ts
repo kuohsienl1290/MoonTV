@@ -338,7 +338,10 @@ export async function resetConfig() {
   if (storage && typeof (storage as any).setAdminConfig === 'function') {
     await (storage as any).setAdminConfig(adminConfig);
   }
-
+  if (cachedConfig == null) {
+    // serverless 环境，直接使用 adminConfig
+    cachedConfig = adminConfig;
+  }
   cachedConfig.SiteConfig = adminConfig.SiteConfig;
   cachedConfig.UserConfig = adminConfig.UserConfig;
   cachedConfig.SourceConfig = adminConfig.SourceConfig;
